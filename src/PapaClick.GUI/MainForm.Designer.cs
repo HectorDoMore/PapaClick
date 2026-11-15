@@ -97,7 +97,7 @@ partial class MainForm
         //
         this.layout.ColumnCount = 2;
         this.layout.RowCount = 4;
-        this.layout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 90));
+        this.layout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100));
         this.layout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100));
         for (int i = 0; i < 4; i++)
         {
@@ -111,7 +111,7 @@ partial class MainForm
         // lblInterval
         //
         this.lblInterval.Name = "lblInterval";
-        this.lblInterval.Text = "点击间隔";
+        this.lblInterval.Text = "点击间隔(秒)";
         this.lblInterval.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         this.lblInterval.Dock = System.Windows.Forms.DockStyle.Fill;
         this.layout.Controls.Add(this.lblInterval, 0, 0);
@@ -119,10 +119,11 @@ partial class MainForm
         // numInterval
         //
         this.numInterval.Name = "numInterval";
-        this.numInterval.Minimum = 10;
-        this.numInterval.Maximum = 60000;
-        this.numInterval.Increment = 10;
-        this.numInterval.Value = 100;
+        this.numInterval.DecimalPlaces = 3;
+        this.numInterval.Minimum = 0.001M;
+        this.numInterval.Maximum = 60M;
+        this.numInterval.Increment = 0.001M;
+        this.numInterval.Value = 0.001M;
         this.numInterval.Dock = System.Windows.Forms.DockStyle.Fill;
         this.numInterval.TextAlign = System.Windows.Forms.HorizontalAlignment.Left;
         this.layout.Controls.Add(this.numInterval, 1, 0);
@@ -175,7 +176,7 @@ partial class MainForm
         // btnStart
         //
         this.btnStart.Name = "btnStart";
-        this.btnStart.Text = "开始 (F5)";
+        this.btnStart.Text = "开始 (F7)";
         this.btnStart.Size = new System.Drawing.Size(90, 28);
         this.btnStart.UseVisualStyleBackColor = true;
         this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
@@ -183,7 +184,7 @@ partial class MainForm
         // btnStop
         //
         this.btnStop.Name = "btnStop";
-        this.btnStop.Text = "停止 (F6)";
+        this.btnStop.Text = "停止 (F7)";
         this.btnStop.Size = new System.Drawing.Size(90, 28);
         this.btnStop.Enabled = false;
         this.btnStop.UseVisualStyleBackColor = true;

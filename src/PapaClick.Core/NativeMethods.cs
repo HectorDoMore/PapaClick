@@ -60,6 +60,19 @@ internal static class NativeMethods
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
+    [DllImport("winmm.dll")]
+    private static extern uint timeBeginPeriod(uint uPeriod);
+
+    [DllImport("winmm.dll")]
+    private static extern uint timeEndPeriod(uint uPeriod);
+
+    /// <summary>
+    /// 把系统计时精度从默认 ~15.6ms 提升到 1ms，连点期间调用，停止后释放。
+    /// </summary>
+    public static void EnableHighResolutionTimer() => timeBeginPeriod(1);
+
+    public static void DisableHighResolutionTimer() => timeEndPeriod(1);
+
     /// <summary>发送一个鼠标事件标志（按下或抬起）。</summary>
     public static void SendMouseFlag(uint flag)
     {

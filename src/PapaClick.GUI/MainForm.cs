@@ -2,12 +2,11 @@ namespace PapaClick.GUI;
 
 /// <summary>
 /// 主窗口：菜单栏、参数设置区、开始/停止按钮、状态栏，已接入 ClickEngine。
-/// 全局热键：F5 开始、F6 停止（程序在后台也响应）。
+/// 全局热键：F7 开始/停止切换（程序在后台也响应）。
 /// </summary>
 public partial class MainForm : Form
 {
-    private const int HOTKEY_ID_START = 1;
-    private const int HOTKEY_ID_STOP = 2;
+    private const int HOTKEY_ID_TOGGLE = 1;
 
     private readonly PapaClick.Core.ClickEngine _engine = new();
 
@@ -23,8 +22,7 @@ public partial class MainForm : Form
         {
             _statusTimer.Stop();
             _engine.Stop();
-            HotkeyApi.UnregisterHotKey(Handle, HOTKEY_ID_START);
-            HotkeyApi.UnregisterHotKey(Handle, HOTKEY_ID_STOP);
+            HotkeyApi.UnregisterHotKey(Handle, HOTKEY_ID_TOGGLE);
         };
     }
 
@@ -32,14 +30,9 @@ public partial class MainForm : Form
     {
         base.OnShown(e);
 
-        if (!HotkeyApi.RegisterHotKey(Handle, HOTKEY_ID_START, HotkeyApi.MOD_NONE, HotkeyApi.VK_F5))
+        if (!HotkeyApi.RegisterHotKey(Handle, HOTKEY_ID_TOGGLE, HotkeyApi.MOD_NONE, HotkeyApi.VK_F7))
         {
-            lblStatus.Text = "全局热键 F5 注册失败（可能被其他程序占用）";
-        }
-
-        if (!HotkeyApi.RegisterHotKey(Handle, HOTKEY_ID_STOP, HotkeyApi.MOD_NONE, HotkeyApi.VK_F6))
-        {
-            lblStatus.Text = "全局热键 F6 注册失败（可能被其他程序占用）";
+            lblStatus.Text = "全局热键 F7 注册失败（可能被其他程序占用）";
         }
     }
 
@@ -47,16 +40,15 @@ public partial class MainForm : Form
     {
         base.WndProc(ref m);
 
-        if (m.Msg == HotkeyApi.WM_HOTKEY)
+        if (m.Msg == HotkeyApi.WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID_TOGGLE)
         {
-            switch (m.WParam.ToInt32())
+            if (_engine.IsRunning)
             {
-                case HOTKEY_ID_START:
-                    StartClicking();
-                    break;
-                case HOTKEY_ID_STOP:
-                    StopClicking();
-                    break;
+                StopClicking();
+            }
+            else
+            {
+                StartClicking();
             }
         }
     }
@@ -69,7 +61,7 @@ public partial class MainForm : Form
     private void tsmHelpAbout_Click(object? sender, System.EventArgs e)
     {
         MessageBox.Show(
-            "PapaClick v0.1\n\n一个轻量的 Windows 连点器。\n全局热键：F5 开始，F6 停止。\n本程序在 AI 协助下制作，基于 GPL-3.0 开源。",
+            "PapaClick v0.1\n\n一个轻量的 Windows 连点器。\n全局热键：F7 开始/停止切换。\n本程序在 AI 协助下制作，基于 GPL-3.0 开源。",
             "关于 PapaClick",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
@@ -86,7 +78,7 @@ public partial class MainForm : Form
             return;
         }
 
-        _engine.IntervalMs = (int)numInterval.Value;
+        _engine.IntervalMs = Math.Max(1, (int)Math.Round(numInterval.Value * 1000));
         _engine.Button = cboButton.SelectedIndex == 1
             ? PapaClick.Core.MouseButton.Right
             : PapaClick.Core.MouseButton.Left;

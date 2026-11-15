@@ -14,7 +14,7 @@ public sealed class ClickEngine
 
     private long _totalClicks;
 
-    /// <summary>点击间隔（毫秒），最小 10。</summary>
+    /// <summary>点击间隔（毫秒），最小 1。</summary>
     public int IntervalMs { get; set; } = 100;
 
     /// <summary>模拟的鼠标按键。</summary>
@@ -38,8 +38,9 @@ public sealed class ClickEngine
             return;
         }
 
-        var interval = Math.Clamp(IntervalMs, 10, int.MaxValue);
+        var interval = Math.Clamp(IntervalMs, 1, int.MaxValue);
         IsRunning = true;
+        NativeMethods.EnableHighResolutionTimer();
         _timer = new System.Threading.Timer(OnTick, null, dueTime: 0, period: interval);
     }
 
@@ -51,6 +52,8 @@ public sealed class ClickEngine
         }
 
         IsRunning = false;
+
+        NativeMethods.DisableHighResolutionTimer();
 
         using var done = new ManualResetEvent(false);
         _timer?.Dispose(done);
