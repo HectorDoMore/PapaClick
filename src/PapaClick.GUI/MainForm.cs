@@ -2,9 +2,13 @@ namespace PapaClick.GUI;
 
 /// <summary>
 /// 主窗口：菜单栏、参数设置区、开始/停止按钮、状态栏，已接入 ClickEngine。
+/// 全局热键：F5 开始、F6 停止（程序在后台也响应）。
 /// </summary>
 public partial class MainForm : Form
 {
+    private const int HOTKEY_ID_START = 1;
+    private const int HOTKEY_ID_STOP = 2;
+
     private readonly PapaClick.Core.ClickEngine _engine = new();
 
     /// <summary>界面计时器：定时刷新点击计数，避免后台线程直接碰控件。</summary>
@@ -19,7 +23,42 @@ public partial class MainForm : Form
         {
             _statusTimer.Stop();
             _engine.Stop();
+            HotkeyApi.UnregisterHotKey(Handle, HOTKEY_ID_START);
+            HotkeyApi.UnregisterHotKey(Handle, HOTKEY_ID_STOP);
         };
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (!HotkeyApi.RegisterHotKey(Handle, HOTKEY_ID_START, HotkeyApi.MOD_NONE, HotkeyApi.VK_F5))
+        {
+            lblStatus.Text = "全局热键 F5 注册失败（可能被其他程序占用）";
+        }
+
+        if (!HotkeyApi.RegisterHotKey(Handle, HOTKEY_ID_STOP, HotkeyApi.MOD_NONE, HotkeyApi.VK_F6))
+        {
+            lblStatus.Text = "全局热键 F6 注册失败（可能被其他程序占用）";
+        }
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        base.WndProc(ref m);
+
+        if (m.Msg == HotkeyApi.WM_HOTKEY)
+        {
+            switch (m.WParam.ToInt32())
+            {
+                case HOTKEY_ID_START:
+                    StartClicking();
+                    break;
+                case HOTKEY_ID_STOP:
+                    StopClicking();
+                    break;
+            }
+        }
     }
 
     private void tsmFileExit_Click(object? sender, System.EventArgs e)
@@ -30,13 +69,17 @@ public partial class MainForm : Form
     private void tsmHelpAbout_Click(object? sender, System.EventArgs e)
     {
         MessageBox.Show(
-            "PapaClick v0.1\n\n一个轻量的 Windows 连点器。\n本程序在 AI 协助下制作，基于 GPL-3.0 开源。",
+            "PapaClick v0.1\n\n一个轻量的 Windows 连点器。\n全局热键：F5 开始，F6 停止。\n本程序在 AI 协助下制作，基于 GPL-3.0 开源。",
             "关于 PapaClick",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);
     }
 
-    private void btnStart_Click(object? sender, System.EventArgs e)
+    private void btnStart_Click(object? sender, System.EventArgs e) => StartClicking();
+
+    private void btnStop_Click(object? sender, System.EventArgs e) => StopClicking();
+
+    private void StartClicking()
     {
         if (_engine.IsRunning)
         {
@@ -62,7 +105,7 @@ public partial class MainForm : Form
         _statusTimer.Start();
     }
 
-    private void btnStop_Click(object? sender, System.EventArgs e)
+    private void StopClicking()
     {
         if (!_engine.IsRunning)
         {
