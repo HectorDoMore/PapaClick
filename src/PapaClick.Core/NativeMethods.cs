@@ -99,4 +99,26 @@ internal static class NativeMethods
             throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "SendInput 调用失败");
         }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetCursorPos(int x, int y);
+
+    /// <summary>取当前光标位置，失败返回 null。</summary>
+    public static POINT? TryGetCursorPos()
+        => GetCursorPos(out var p) ? p : null;
+
+    /// <summary>移动光标到绝对屏幕坐标。</summary>
+    public static bool TrySetCursorPos(int x, int y) => SetCursorPos(x, y);
 }

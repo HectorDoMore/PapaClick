@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowBg" Color="#FAFAFC"/>
+    <SolidColorBrush x:Key="Surface" Color="#F0F0F4"/>
+    <SolidColorBrush x:Key="ControlBg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Text" Color="#1C1C21"/>
+    <SolidColorBrush x:Key="TextMuted" Color="#888780"/>
+    <SolidColorBrush x:Key="Border" Color="#D9D8E0"/>
+    <SolidColorBrush x:Key="Accent" Color="#534AB7"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#453DA0"/>
+    <SolidColorBrush x:Key="AccentFg" Color="#FFFFFF"/>
+</ResourceDictionary>
