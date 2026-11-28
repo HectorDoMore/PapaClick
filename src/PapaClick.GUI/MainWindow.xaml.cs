@@ -108,6 +108,7 @@ public partial class MainWindow : Window
             || seconds is < 0.001 or > 60)
         {
             StatusText.Text = "点击间隔无效：请输入 0.001 ~ 60 之间的数字（秒）";
+            Core.DebugLog.Write($"GUI StartClicking 参数无效: \"{IntervalBox.Text}\"");
             return;
         }
 
@@ -116,6 +117,8 @@ public partial class MainWindow : Window
         _engine.Mode = ModeBox.SelectedIndex == 1 ? ClickMode.Double : ClickMode.Single;
         _engine.JitterEnabled = JitterCheck.IsChecked == true;
         _engine.JitterRangePx = Math.Clamp(_settings.JitterRangePx, 1, 50);
+
+        Core.DebugLog.Write($"GUI StartClicking: seconds={seconds}");
 
         IntervalBox.IsEnabled = false;
         ButtonBox.IsEnabled = false;

@@ -19,6 +19,8 @@ public sealed class ClickEngine
     private NativeMethods.POINT? _anchor;
     private long _sessionClicks;
     private long _totalClicks;
+    private long _sendFailures;
+    private bool _loggedFirstFailure;
 
     /// <summary>点击间隔（毫秒），最小 1。</summary>
     public int IntervalMs { get; set; } = 100;
@@ -54,10 +56,13 @@ public sealed class ClickEngine
         }
 
         Interlocked.Exchange(ref _sessionClicks, 0);
+        _sendFailures = 0;
+        _loggedFirstFailure = false;
         _anchor = JitterEnabled ? NativeMethods.TryGetCursorPos() : null;
         IsRunning = true;
         NativeMethods.EnableHighResolutionTimer();
         _timer = new System.Threading.Timer(OnTick, null, dueTime: 0, period: Timeout.Infinite);
+        DebugLog.Write($"Start: interval={IntervalMs}ms button={Button} mode={Mode} jitter={JitterEnabled}(±{JitterRangePx}px) anchor={_anchor?.X},{_anchor?.Y}");
     }
 
     public void Stop()
@@ -87,10 +92,9 @@ public sealed class ClickEngine
         {
             DoClick();
         }
-        catch
+        catch (Exception ex)
         {
-            // 定时器线程上不能抛异常（会拖垮整个进程），
-            // 单次失败（如被系统拦截）直接跳过，下个周期继续。
+            DebugLog.Write($"OnTick 异常: {ex.GetType().Name}: {ex.Message}");
         }
 
         if (!IsRunning)
@@ -127,18 +131,35 @@ public sealed class ClickEngine
             ? (NativeMethods.MOUSEEVENTF_LEFTDOWN, NativeMethods.MOUSEEVENTF_LEFTUP)
             : (NativeMethods.MOUSEEVENTF_RIGHTDOWN, NativeMethods.MOUSEEVENTF_RIGHTUP);
 
-        NativeMethods.SendMouseFlag(down);
-        NativeMethods.SendMouseFlag(up);
+        if (!NativeMethods.TrySendMouseFlag(down, out var errDown))
+        {
+            LogSendFailure("down", errDown);
+        }
+        NativeMethods.TrySendMouseFlag(up, out _);
 
         if (Mode == ClickMode.Double)
         {
             Thread.Sleep(DoubleClickGapMs);
-            NativeMethods.SendMouseFlag(down);
-            NativeMethods.SendMouseFlag(up);
+            if (!NativeMethods.TrySendMouseFlag(down, out var errDown2))
+            {
+                LogSendFailure("down(2nd)", errDown2);
+            }
+            NativeMethods.TrySendMouseFlag(up, out _);
         }
 
         var session = Interlocked.Increment(ref _sessionClicks);
         var total = Interlocked.Increment(ref _totalClicks);
         Clicked?.Invoke(session, total);
+    }
+
+    /// <summary>SendInput 失败时记录：首次必记，之后每 200 次记一次，避免日志爆炸。</summary>
+    private void LogSendFailure(string phase, int win32Error)
+    {
+        var failures = Interlocked.Increment(ref _sendFailures);
+        if (!_loggedFirstFailure || failures % 200 == 0)
+        {
+            _loggedFirstFailure = true;
+            DebugLog.Write($"SendInput {phase} 失败 win32={win32Error}（5=拒绝访问,通常为目标窗口管理员权限/UIPI 拦截） 累计失败={failures} 前台窗口=\"{NativeMethods.GetForegroundWindowTitle()}\"");
+        }
     }
 }

@@ -73,8 +73,8 @@ internal static class NativeMethods
 
     public static void DisableHighResolutionTimer() => timeEndPeriod(1);
 
-    /// <summary>发送一个鼠标事件标志（按下或抬起）。</summary>
-    public static void SendMouseFlag(uint flag)
+    /// <summary>发送一个鼠标事件标志（按下或抬起）。失败返回 false 并带 Win32 错误码。</summary>
+    public static bool TrySendMouseFlag(uint flag, out int lastError)
     {
         var input = new INPUT
         {
@@ -96,7 +96,31 @@ internal static class NativeMethods
         var sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
         if (sent != 1)
         {
-            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "SendInput 调用失败");
+            lastError = Marshal.GetLastWin32Error();
+            return false;
+        }
+        lastError = 0;
+        return true;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);
+
+    /// <summary>取前台窗口标题（诊断用）。</summary>
+    public static string GetForegroundWindowTitle()
+    {
+        try
+        {
+            var sb = new System.Text.StringBuilder(256);
+            _ = GetWindowText(GetForegroundWindow(), sb, 256);
+            return sb.ToString();
+        }
+        catch
+        {
+            return "";
         }
     }
 
